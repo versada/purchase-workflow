@@ -1,6 +1,9 @@
 # Copyright 2018 GRAP - Sylvain Legal
 # Copyright 2019 Tecnativa - Pedro M. Baeza
+# Copyright 2020 Versada UAB
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
+
+import unittest
 
 import odoo.tests.common as common
 from odoo import fields
@@ -48,7 +51,7 @@ class TestProductSupplierinfoDiscount(common.SavepointCase):
 
     def test_001_purchase_order_partner_3_qty_1(self):
         self.po_line_1._onchange_quantity()
-        self.assertEquals(
+        self.assertEqual(
             self.po_line_1.discount,
             10,
             "Incorrect discount for product 6 with partner 3 and qty 1: "
@@ -58,7 +61,7 @@ class TestProductSupplierinfoDiscount(common.SavepointCase):
     def test_002_purchase_order_partner_3_qty_10(self):
         self.po_line_1.write({"product_qty": 10})
         self.po_line_1._onchange_quantity()
-        self.assertEquals(
+        self.assertEqual(
             self.po_line_1.discount,
             20.0,
             "Incorrect discount for product 6 with partner 3 and qty 10: "
@@ -68,12 +71,16 @@ class TestProductSupplierinfoDiscount(common.SavepointCase):
     def test_003_purchase_order_partner_1_qty_1(self):
         self.po_line_1.write({"partner_id": self.partner_1.id, "product_qty": 1})
         self.po_line_1.onchange_product_id()
-        self.assertEquals(
+        self.assertEqual(
             self.po_line_1.discount,
             0.0,
             "Incorrect discount for product " "6 with partner 1 and qty 1",
         )
 
+    @unittest.skip(
+        "`stock.rule` changes were removed, "
+        "migration is needed if test is still applicable"
+    )
     def test_004_prepare_purchase_order_line(self):
         stock_rule = self.env["stock.rule"].create(
             {
@@ -118,8 +125,8 @@ class TestProductSupplierinfoDiscount(common.SavepointCase):
         # Change the partner and raise onchange function
         self.partner_1.default_supplierinfo_discount = 15
         supplierinfo.name = self.partner_1
-        supplierinfo.onchange_name()
-        self.assertEquals(
+        supplierinfo._onchange_name()
+        self.assertEqual(
             supplierinfo.discount,
             15,
             "Incorrect discount for supplierinfo "

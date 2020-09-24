@@ -12,3 +12,4 @@
 * Sudhir Arya <sudhir@erpharbor.com>
 * Lorenzo Battistini <https://github.com/eLBati>
 * Luisa Miguéns <luisa.miguens@solvos.es>
+* Naglis Jonaitis <naglis@versada.eu>
