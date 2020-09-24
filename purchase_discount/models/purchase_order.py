@@ -1,6 +1,7 @@
 # Copyright 2004-2009 Tiny SPRL (<http://tiny.be>).
 # Copyright 2016 ACSONE SA/NV (<http://acsone.eu>)
 # Copyright 2015-2019 Tecnativa - Pedro M. Baeza
+# Copyright 2020 Versada UAB
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 from odoo import api, fields, models
@@ -103,7 +104,32 @@ class PurchaseOrderLine(models.Model):
             return
         self.discount = seller.discount
 
-    def _prepare_account_move_line(self, move):
-        vals = super(PurchaseOrderLine, self)._prepare_account_move_line(move)
+    def _prepare_account_move_line(self, move=False):
+        vals = super()._prepare_account_move_line(move=move)
         vals["discount"] = self.discount
         return vals
+
+    @api.model
+    def _prepare_purchase_order_line_from_procurement(
+        self, product_id, product_qty, product_uom, company_id, values, po
+    ):
+        res = super()._prepare_purchase_order_line_from_procurement(
+            product_id, product_qty, product_uom, company_id, values, po
+        )
+        date = po.date_order.date() if po.date_order else None
+        seller = product_id._select_seller(
+            partner_id=values["supplier"].name,
+            quantity=product_qty,
+            date=date,
+            uom_id=product_uom,
+        )
+        res.update(self._prepare_purchase_order_line_from_seller(seller))
+        return res
+
+    @api.model
+    def _prepare_purchase_order_line_from_seller(self, seller):
+        """Overload this function to prepare other data from seller,
+        like in purchase_triple_discount module"""
+        if not seller:
+            return {}
+        return {"discount": seller.discount}
