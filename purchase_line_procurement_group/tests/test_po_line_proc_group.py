@@ -10,19 +10,11 @@ class TestPOLineProcurementGroup(SavepointCase):
         super().setUpClass()
         cls.env = cls.env(context=dict(cls.env.context, tracking_disable=True))
 
-        def _create_orderpoint(product, qty_min, qty_max, location):
-            orderpoint_model = cls.env["stock.warehouse.orderpoint"]
-            return orderpoint_model.create(
-                {
-                    "name": "OP/%s" % product.name,
-                    "product_id": product.id,
-                    "product_min_qty": qty_min,
-                    "product_max_qty": qty_max,
-                    "location_id": location.id,
-                }
-            )
+        cls.warehouse = cls.env.ref("stock.warehouse0")
+        cls.mto_route = cls.env.ref("stock.route_warehouse0_mto")
+        cls.location_customers = cls.env.ref("stock.stock_location_customers")
+        cls.uom_unit = cls.env.ref("uom.product_uom_unit")
 
-        # Create supplier
         cls.pyromaniacs = cls.env["res.partner"].create(
             {"name": "Pyromaniacs Inc", "company_type": "company"}
         )
@@ -45,62 +37,87 @@ class TestPOLineProcurementGroup(SavepointCase):
             .product_variant_ids
         )
 
-        cls.warehouse = cls.env.ref("stock.warehouse0")
-        cls.warehouse.write({"reception_steps": "three_steps"})
-        wh2 = cls.env["stock.warehouse"].create(
-            {"name": "WH2", "code": "WH2", "partner_id": False}
-        )
-        # Create WH > WH2 PG and route
-        cls.wh_wh2_pg = cls.env["procurement.group"].create(
-            {"name": "WH > WH2", "move_type": "direct"}
-        )
-        wh_wh2_route = cls.env["stock.location.route"].create(
-            {
-                "name": "WH > WH2",
-                "product_selectable": True,
-                "rule_ids": [
-                    (
-                        0,
-                        0,
-                        {
-                            "name": "WH>WH2",
-                            "action": "pull",
-                            "location_id": wh2.lot_stock_id.id,
-                            "location_src_id": cls.warehouse.lot_stock_id.id,
-                            "procure_method": "make_to_order",
-                            "picking_type_id": cls.env.ref(
-                                "stock.picking_type_internal"
-                            ).id,
-                            "group_propagation_option": "fixed",
-                            "group_id": cls.wh_wh2_pg.id,
-                            "propagate_cancel": True,
-                        },
-                    )
-                ],
-            }
-        )
-        cls.lighter.write({"route_ids": [(4, wh_wh2_route.id)]})
-        _create_orderpoint(cls.lighter, 15, 30, cls.warehouse.lot_stock_id)
-        _create_orderpoint(cls.lighter, 10, 20, wh2.lot_stock_id)
+        cls.lighter.write({"route_ids": [(4, cls.mto_route.id)]})
 
-        # Force parent store computation after creation of WH2 because location
-        # quantities are computed using parent_left _right in domain
-        cls.env["stock.location"]._parent_store_compute()
+        cls.proc_group1 = cls.env["procurement.group"].create(
+            {"name": "PROC1", "move_type": "direct"}
+        )
+        cls.proc_group2 = cls.env["procurement.group"].create(
+            {"name": "PROC2", "move_type": "direct"}
+        )
+
+        cls.move1 = (
+            cls.env["stock.move"]
+            .create(
+                {
+                    "name": "TEST-MOVE-1",
+                    "location_id": cls.warehouse.lot_stock_id.id,
+                    "location_dest_id": cls.location_customers.id,
+                    "product_id": cls.lighter.id,
+                    "product_uom": cls.uom_unit.id,
+                    "product_uom_qty": 10,
+                    "procure_method": "make_to_order",
+                    "group_id": cls.proc_group1.id,
+                }
+            )
+            ._action_confirm()
+        )
+
+        cls.move2 = (
+            cls.env["stock.move"]
+            .create(
+                {
+                    "name": "TEST-MOVE-2",
+                    "location_id": cls.warehouse.lot_stock_id.id,
+                    "location_dest_id": cls.location_customers.id,
+                    "product_id": cls.lighter.id,
+                    "product_uom": cls.uom_unit.id,
+                    "product_uom_qty": 15,
+                    "procure_method": "make_to_order",
+                    "group_id": cls.proc_group2.id,
+                }
+            )
+            ._action_confirm()
+        )
+
+        cls.move3 = (
+            cls.env["stock.move"]
+            .create(
+                {
+                    "name": "TEST-MOVE-3",
+                    "location_id": cls.warehouse.lot_stock_id.id,
+                    "location_dest_id": cls.location_customers.id,
+                    "product_id": cls.lighter.id,
+                    "product_uom": cls.uom_unit.id,
+                    "product_uom_qty": 20,
+                    "procure_method": "make_to_order",
+                    "group_id": cls.proc_group2.id,
+                }
+            )
+            ._action_confirm()
+        )
 
     def test_po_line_proc_group(self):
-        # Ensure PO lines generated by the scheduler have proper PG
-        self.env["procurement.group"].run_scheduler()
         po = self.env["purchase.order"].search(
             [("partner_id", "=", self.pyromaniacs.id)]
         )
-        self.assertEqual(len(po.order_line), 1)
-        line = po.order_line[0]
-        self.assertEqual(line.product_id, self.lighter)
-        self.assertAlmostEqual(line.product_qty, 30)
-        # Ensure stock moves generated by PO confirmation have proper PG
+        self.assertEqual(len(po.order_line), 2)
+        self.assertEqual(
+            po.order_line.mapped("procurement_group_id.name"), ["PROC1", "PROC2"]
+        )
+        for line in po.order_line:
+            if line.procurement_group_id == self.proc_group1:
+                self.assertAlmostEqual(line.product_uom_qty, 10)
+            if line.procurement_group_id == self.proc_group2:
+                self.assertAlmostEqual(line.product_uom_qty, 35)
+
         po.button_confirm()
-        self.assertEqual(len(po.picking_ids.move_lines), 1)
-        move = po.picking_ids.move_lines[0]
-        self.assertEqual(move.product_id, self.lighter)
-        self.assertEqual(move.product_uom_qty, 30.0)
-        self.assertEqual(move.location_dest_id, self.warehouse.wh_input_stock_loc_id)
+
+        move_lines = po.picking_ids.move_lines
+        self.assertEqual(len(move_lines), 2)
+        self.assertEqual(move_lines.mapped("group_id.name"), ["PROC1", "PROC2"])
+        for move_line in move_lines:
+            if move_line.procurement_group_id == self.proc_group1:
+                self.assertAlmostEqual(move_line.product_uom_qty, 10)
+            if move_line.procurement_group_id == self.proc_group2:
+                self.assertAlmostEqual(move_line.product_uom_qty, 35)
