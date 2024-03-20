@@ -23,10 +23,18 @@ class TestPurchaseAdvancePayment(common.TransactionCase):
 
         # Products
         cls.product_1 = cls.env["product.product"].create(
-            {"name": "Desk Combination", "type": "consu", "purchase_method": "purchase"}
+            {
+                "name": "Desk Combination",
+                "type": "consu",
+                "purchase_method": "purchase",
+            }
         )
         cls.product_2 = cls.env["product.product"].create(
-            {"name": "Conference Chair", "type": "consu", "purchase_method": "purchase"}
+            {
+                "name": "Conference Chair",
+                "type": "consu",
+                "purchase_method": "purchase",
+            }
         )
         cls.product_3 = cls.env["product.product"].create(
             {
@@ -146,6 +154,9 @@ class TestPurchaseAdvancePayment(common.TransactionCase):
                 "currency_id": cls.currency_usd.id,
             }
         )
+        # Force order currency to USD to make sure that company and
+        # order currencies are different.
+        cls.purchase_order_1.currency_id = cls.currency_usd
 
     def test_00_with_context_payment(self):
         context_payment_2 = {
