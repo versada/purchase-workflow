@@ -496,8 +496,7 @@ class BlanketOrderLine(models.Model):
         date_format = lang.date_format
         return datetime.strftime(fields.Date.from_string(date), date_format)
 
-    def name_get(self):
-        result = []
+    def _compute_display_name(self):
         if self.env.context.get("from_purchase_order"):
             for record in self:
                 res = f"[{record.order_id.name}]"
@@ -511,9 +510,9 @@ class BlanketOrderLine(models.Model):
                     record.remaining_uom_qty,
                     record.product_uom.name,
                 )
-                result.append((record.id, res))
-            return result
-        return super().name_get()
+                record.display_name = res
+        else:
+            return super()._compute_display_name()
 
     def _get_display_price(self, product):
         seller = product._select_seller(
