@@ -35,10 +35,10 @@ PO and SO are linked by their order lines.
 This module also link them by the PO's Origin field, to cover more
 cases. For example:
 
-- If a user cancels a PO, by default the link would have been broken;
-  now it won't;
-- Or if a user manually defines or updates the Origin field of a PO, it
-  will be taken into account.
+-  If a user cancels a PO, by default the link would have been broken;
+   now it won't;
+-  Or if a user manually defines or updates the Origin field of a PO, it
+   will be taken into account.
 
 **Table of contents**
 
@@ -66,14 +66,14 @@ Authors
 Contributors
 ------------
 
-- Phuc (Kieu Hoang) <phuckh@trobz.com>
+-  Phuc (Kieu Hoang) <phuckh@trobz.com>
 
 Other credits
 -------------
 
 The development of this module has been financially supported by:
 
-- Camptocamp
+-  Camptocamp
 
 Maintainers
 -----------
