@@ -1,7 +1,10 @@
 # Copyright 2019 ForgeFlow, S.L.
 # License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0)
 
+from markupsafe import Markup
+
 from odoo import _, api, fields, models
+from odoo.tools import html_escape
 
 
 class PurchaseRequestAllocation(models.Model):
@@ -103,12 +106,12 @@ class PurchaseRequestAllocation(models.Model):
             "<li><b>%(product_name)s</b>: "
             "Received quantity %(product_qty)s %(product_uom)s</li>"
         ) % {
-            "product_name": message_data["product_name"],
+            "product_name": html_escape(message_data["product_name"]),
             "product_qty": message_data["product_qty"],
             "product_uom": message_data["product_uom"],
         }
         message += "</ul>"
-        return message
+        return Markup(message)
 
     def _prepare_message_data(self, po_line, request, allocated_qty):
         return {
@@ -129,6 +132,5 @@ class PurchaseRequestAllocation(models.Model):
             message = self._purchase_request_confirm_done_message_content(message_data)
             request.message_post(
                 body=message,
-                subtype_id=self.env.ref("mail.mt_comment").id,
-                body_is_html=True,
+                subtype_id=self.env.ref("mail.mt_note").id,
             )

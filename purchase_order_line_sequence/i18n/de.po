@@ -17,11 +17,17 @@ msgstr ""
 #. module: purchase_order_line_sequence
 #: model_terms:ir.ui.view,arch_db:purchase_order_line_sequence.report_purchase_order_sequence_qweb
 #: model_terms:ir.ui.view,arch_db:purchase_order_line_sequence.report_purchase_quote_sequence_qweb
-msgid "<strong>Line Number</strong>"
+msgid "<strong>Sequence</strong>"
 msgstr ""
 
 #. module: purchase_order_line_sequence
-#: model:ir.model.fields,help:purchase_order_line_sequence.field_purchase_order_line__visible_sequence
+#: model:ir.model.fields,field_description:purchase_order_line_sequence.field_purchase_order__display_name
+#: model:ir.model.fields,field_description:purchase_order_line_sequence.field_purchase_order_line__display_name
+msgid "Display Name"
+msgstr ""
+
+#. module: purchase_order_line_sequence
+#: model:ir.model.fields,help:purchase_order_line_sequence.field_purchase_order_line__sequence2
 msgid "Displays the sequence of the line in the purchase order."
 msgstr ""
 
@@ -36,14 +42,15 @@ msgid "Hidden Sequence"
 msgstr ""
 
 #. module: purchase_order_line_sequence
-#: model:ir.model,name:purchase_order_line_sequence.model_account_move_line
-msgid "Journal Item"
+#: model:ir.model.fields,field_description:purchase_order_line_sequence.field_purchase_order__id
+#: model:ir.model.fields,field_description:purchase_order_line_sequence.field_purchase_order_line__id
+msgid "ID"
 msgstr ""
 
 #. module: purchase_order_line_sequence
-#: model:ir.model.fields,field_description:purchase_order_line_sequence.field_purchase_order_line__visible_sequence
-#: model_terms:ir.ui.view,arch_db:purchase_order_line_sequence.report_invoice_document_inherit_purchase_sequence
-msgid "Line Number"
+#: model:ir.model.fields,field_description:purchase_order_line_sequence.field_purchase_order____last_update
+#: model:ir.model.fields,field_description:purchase_order_line_sequence.field_purchase_order_line____last_update
+msgid "Last Modified on"
 msgstr ""
 
 #. module: purchase_order_line_sequence
@@ -76,6 +83,6 @@ msgid "Purchase Order Line"
 msgstr ""
 
 #. module: purchase_order_line_sequence
-#: model:ir.model,name:purchase_order_line_sequence.model_stock_move
-msgid "Stock Move"
+#: model:ir.model.fields,field_description:purchase_order_line_sequence.field_purchase_order_line__sequence2
+msgid "Sequence"
 msgstr ""
